@@ -35,6 +35,8 @@
 #include <QMenu>
 #include <QIcon>
 #include <QStringList>
+#include <KSharedConfig>
+#include <KConfigGroup>
 #include <qpa/qplatformthemefactory_p.h>
 #include "qt6ct.h"
 #include "appearancepage.h"
@@ -71,7 +73,7 @@ AppearancePage::AppearancePage(QWidget *parent) :
     QMenu *menu = new QMenu(this);
     menu->addAction(QIcon::fromTheme("document-new"), tr("Create"), this, SLOT(createColorScheme()));
     m_changeColorSchemeAction = menu->addAction(QIcon::fromTheme("accessories-text-editor"), tr("Edit"), this, SLOT(changeColorScheme()));
-    menu->addAction(QIcon::fromTheme("edit-copy"), tr("Create a Copy"), this, SLOT(copyColorScheme()));
+    m_copyColorSchemeAction = menu->addAction(QIcon::fromTheme("edit-copy"), tr("Create a Copy"), this, SLOT(copyColorScheme()));
     m_renameColorSchemeAction = menu->addAction(tr("Rename"), this, SLOT(renameColorScheme()));
     menu->addSeparator();
     m_removeColorSchemeAction = menu->addAction(QIcon::fromTheme("edit-delete"), tr("Remove"), this, SLOT(removeColorScheme()));
@@ -110,6 +112,11 @@ void AppearancePage::writeSettings(QSettings *settings)
     settings->setValue("color_scheme_path", m_ui->colorSchemeComboBox->currentData().toString());
     settings->setValue("standard_dialogs", m_ui->dialogComboBox->currentData().toString());
     settings->endGroup();
+
+    KSharedConfigPtr config = KSharedConfig::openConfig("kdeglobals");
+    KConfigGroup group(config, "KDE");
+    group.writeEntry("widgetStyle", "qt6ct-style");
+    group.sync();
 }
 
 void AppearancePage::on_styleComboBox_textActivated(const QString &text)
@@ -303,6 +310,7 @@ void AppearancePage::setPreviewPalette(const QPalette &p)
 
 void AppearancePage::updateActions()
 {
+    m_copyColorSchemeAction->setVisible(!Qt6CT::isKColorScheme(m_ui->colorSchemeComboBox->currentData().toString()));
     if(m_ui->colorSchemeComboBox->count() == 0 ||
             !QFileInfo(m_ui->colorSchemeComboBox->currentData().toString()).isWritable())
     {
@@ -380,11 +388,23 @@ void AppearancePage::findColorSchemes(const QString &path)
 {
     QDir dir(path);
     dir.setFilter(QDir::Files);
-    dir.setNameFilters(QStringList() << "*.conf");
+    dir.setNameFilters(QStringList() << "*.conf" << "*.colors");
 
     for(const QFileInfo &info : dir.entryInfoList())
     {
-        m_ui->colorSchemeComboBox->addItem(info.baseName(), info.filePath());
+        QString name;
+        QString path = info.filePath();
+        if(Qt6CT::isKColorScheme(path))
+        {
+            KSharedConfigPtr config = KSharedConfig::openConfig(path, KConfig::SimpleConfig);
+            KConfigGroup group(config, "General");
+            name = group.readEntry("Name", info.baseName()) + " (KColorScheme)";
+        }
+        else
+        {
+            name = info.baseName();
+        }
+        m_ui->colorSchemeComboBox->addItem(name, path);
     }
 }
 

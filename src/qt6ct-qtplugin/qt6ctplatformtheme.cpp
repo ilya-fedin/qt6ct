@@ -44,6 +44,7 @@
 #endif
 #include <QFile>
 #include <QFileSystemWatcher>
+#include <QQuickStyle>
 #include <private/qiconloader_p.h>
 
 #include "qt6ct.h"
@@ -51,6 +52,9 @@
 
 #include <QStringList>
 #include <qpa/qplatformthemefactory_p.h>
+
+#include <KIconEngine>
+#include <KIconLoader>
 
 Q_LOGGING_CATEGORY(lqt6ct, "qt6ct", QtWarningMsg)
 
@@ -62,17 +66,24 @@ Qt6CTPlatformTheme::Qt6CTPlatformTheme()
     if(QGuiApplication::desktopSettingsAware())
     {
         readSettings();
+        //must be applied before Q_COREAPP_STARTUP_FUNCTION execution
+        if(Qt6CT::isKColorScheme(m_schemePath))
+            qApp->setProperty("KDE_COLOR_SCHEME_PATH", m_schemePath);
         QMetaObject::invokeMethod(this, "applySettings", Qt::QueuedConnection);
 #ifdef QT_WIDGETS_LIB
         QMetaObject::invokeMethod(this, "createFSWatcher", Qt::QueuedConnection);
 #endif
         QGuiApplication::setFont(m_generalFont);
+        //don't override the value explicitly set by the user
+        if(QQuickStyle::name().isEmpty() || QQuickStyle::name() == QLatin1String("Fusion"))
+            QQuickStyle::setStyle(QLatin1String("org.kde.desktop"));
     }
     qCDebug(lqt6ct) << "using qt6ct plugin";
 #ifdef QT_WIDGETS_LIB
     if(!QStyleFactory::keys().contains("qt6ct-style"))
         qCCritical(lqt6ct) << "unable to find qt6ct proxy style";
 #endif
+	QCoreApplication::instance()->installEventFilter(this);
 }
 
 Qt6CTPlatformTheme::~Qt6CTPlatformTheme()
@@ -148,6 +159,11 @@ QIcon Qt6CTPlatformTheme::fileIcon(const QFileInfo &fileInfo, QPlatformTheme::Ic
     return QIcon::fromTheme(type.iconName());
 }
 
+QIconEngine *Qt6CTPlatformTheme::createIconEngine(const QString &iconName) const
+{
+    return new KIconEngine(iconName, KIconLoader::global());
+}
+
 void Qt6CTPlatformTheme::applySettings()
 {
     if(!QGuiApplication::desktopSettingsAware() || m_isIgnored)
@@ -168,6 +184,9 @@ void Qt6CTPlatformTheme::applySettings()
     }
 
     QGuiApplication::setFont(m_generalFont); //apply font
+
+    if(Qt6CT::isKColorScheme(m_schemePath))
+        qApp->setProperty("KDE_COLOR_SCHEME_PATH", m_schemePath);
 
     if(m_update && m_usePalette)
         QGuiApplication::setPalette(m_palette ? *m_palette : *QGenericUnixTheme::palette(QPlatformTheme::SystemPalette));
@@ -257,10 +276,10 @@ void Qt6CTPlatformTheme::readSettings()
 
     settings.beginGroup("Appearance");
     m_style = settings.value("style", "Fusion").toString();
-    QString schemePath = settings.value("custom_palette", false).toBool()
+    m_schemePath = settings.value("custom_palette", false).toBool()
         ? Qt6CT::resolvePath(settings.value("color_scheme_path").toString()) //replace environment variables
         : QString();
-    m_palette = Qt6CT::loadColorScheme(schemePath);
+    m_palette = Qt6CT::loadColorScheme(m_schemePath);
     m_iconTheme = settings.value("icon_theme").toString();
     //load dialogs
     if(!m_update)
@@ -367,4 +386,18 @@ QString Qt6CTPlatformTheme::loadStyleSheets(const QStringList &paths)
     static const QRegularExpression regExp("//.*\n");
     content.replace(regExp, "\n");
     return content;
+}
+
+//There's such a thing as KColorSchemeManager that lets the user to change the color scheme
+//application-wide and we should re-apply the color scheme if KCSM resets it to the default
+//which leads KColorScheme to get the color scheme from kdeglobals which won't help us.
+bool Qt6CTPlatformTheme::eventFilter(QObject *obj, QEvent *e)
+{
+    if(obj == qApp &&
+            e->type() == QEvent::DynamicPropertyChange &&
+            static_cast<QDynamicPropertyChangeEvent*>(e)->propertyName() == "KDE_COLOR_SCHEME_PATH" &&
+            qApp->property("KDE_COLOR_SCHEME_PATH").toString().isEmpty() &&
+            Qt6CT::isKColorScheme(m_schemePath))
+        applySettings();
+    return QObject::eventFilter(obj, e);
 }

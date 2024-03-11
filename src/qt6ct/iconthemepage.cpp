@@ -34,6 +34,8 @@
 #include <QProgressBar>
 #include <QMetaObject>
 #include <QThread>
+#include <KSharedConfig>
+#include <KConfigGroup>
 #include "qt6ct.h"
 #include "iconthemepage.h"
 #include "ui_iconthemepage.h"
@@ -67,8 +69,15 @@ IconThemePage::~IconThemePage()
 void IconThemePage::writeSettings(QSettings *settings)
 {
     QTreeWidgetItem *item = m_ui->treeWidget->currentItem();
-    if(item)
-        settings->setValue("Appearance/icon_theme", item->data(3, Qt::UserRole));
+    if(!item)
+        return;
+
+    settings->setValue("Appearance/icon_theme", item->data(3, Qt::UserRole));
+
+    KSharedConfigPtr config = KSharedConfig::openConfig("kdeglobals");
+    KConfigGroup group(config, "Icons");
+    group.writeEntry("Theme", item->data(3, Qt::UserRole));
+    group.sync();
 }
 
 void IconThemePage::onFinished()

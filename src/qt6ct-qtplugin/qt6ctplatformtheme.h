@@ -62,9 +62,12 @@ public:
     //virtual QPixmap fileIconPixmap(const QFileInfo &fileInfo, const QSizeF &size,
     //                               QPlatformTheme::IconOptions iconOptions = 0) const;
 
-    //virtual QIconEngine *createIconEngine(const QString &iconName) const;
+    virtual QIconEngine *createIconEngine(const QString &iconName) const;
     //virtual QList<QKeySequence> keyBindings(QKeySequence::StandardKey key) const;
     //virtual QString standardButtonText(int button) const;
+
+protected:
+	bool eventFilter(QObject *obj, QEvent *e) override;
 
 private slots:
     void applySettings();
@@ -79,7 +82,7 @@ private:
     bool hasWidgets();
 #endif
     QString loadStyleSheets(const QStringList &paths);
-    QString m_style, m_iconTheme, m_userStyleSheet, m_prevStyleSheet;
+    QString m_style, m_schemePath, m_iconTheme, m_userStyleSheet, m_prevStyleSheet;
     std::optional<QPalette> m_palette;
     QFont m_generalFont, m_fixedFont;
     int m_doubleClickInterval;
