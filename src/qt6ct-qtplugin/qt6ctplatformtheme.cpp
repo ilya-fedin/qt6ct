@@ -249,18 +249,16 @@ void Qt6CTPlatformTheme::updateSettings()
 
 void Qt6CTPlatformTheme::readSettings()
 {
-    m_palette.reset();
-
     QSettings settings(Qt6CT::configFile(), QSettings::IniFormat);
 
     settings.beginGroup("Appearance");
     m_style = settings.value("style", "Fusion").toString();
-    QString schemePath = settings.value("color_scheme_path").toString();
-    if(!schemePath.isEmpty() && settings.value("custom_palette", false).toBool())
-    {
-        schemePath = Qt6CT::resolvePath(schemePath); //replace environment variables
-        m_palette = std::make_unique<QPalette>(Qt6CT::loadColorScheme(schemePath, *QPlatformTheme::palette(SystemPalette)));
-    }
+    QString schemePath = settings.value("custom_palette", false).toBool()
+        ? Qt6CT::resolvePath(settings.value("color_scheme_path").toString()) //replace environment variables
+        : QString();
+    m_palette = !schemePath.isEmpty()
+        ? std::make_unique<QPalette>(Qt6CT::loadColorScheme(schemePath, *QPlatformTheme::palette(SystemPalette)))
+        : nullptr;
     m_iconTheme = settings.value("icon_theme").toString();
     //load dialogs
     if(!m_update)

@@ -326,8 +326,7 @@ void AppearancePage::readSettings()
     m_ui->styleComboBox->setCurrentText(style);
 
     m_ui->customPaletteButton->setChecked(settings.value("custom_palette", false).toBool());
-    QString colorSchemePath = settings.value("color_scheme_path").toString();
-    colorSchemePath = Qt6CT::resolvePath(colorSchemePath); //replace environment variables
+    QString colorSchemePath = Qt6CT::resolvePath(settings.value("color_scheme_path").toString()); //replace environment variables
 
     QDir("/").mkpath(Qt6CT::userColorSchemePath());
     findColorSchemes(Qt6CT::userColorSchemePath());
