@@ -124,6 +124,9 @@ QStringList Qt6CT::sharedColorSchemePaths()
 
 QString Qt6CT::resolvePath(const QString &path)
 {
+    if(path.isEmpty())
+        return path;
+
     QString tmp = path;
     tmp.replace("~", QStandardPaths::writableLocation(QStandardPaths::HomeLocation));
     if(!tmp.contains("$"))
