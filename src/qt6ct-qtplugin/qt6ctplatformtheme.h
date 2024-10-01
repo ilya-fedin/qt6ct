@@ -88,7 +88,6 @@ private:
     int m_buttonBoxLayout;
     int m_keyboardScheme;
     bool m_update = false;
-    bool m_usePalette = true;
     int m_toolButtonStyle = Qt::ToolButtonFollowStyle;
     int m_wheelScrollLines = 3;
     bool m_showShortcutsInContextMenus = false;
