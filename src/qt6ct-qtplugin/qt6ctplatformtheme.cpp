@@ -41,22 +41,28 @@
 #include <QStyleFactory>
 #include <QApplication>
 #include <QWidget>
+#if QT_CONFIG(graphicsview)
+#include <QGraphicsScene>
+#endif
+#include <private/qapplication_p.h>
 #endif
 #include <QFile>
 #include <QFileSystemWatcher>
-#include <private/qiconloader_p.h>
 
 #include "qt6ct.h"
 #include "qt6ctplatformtheme.h"
 
 #include <QStringList>
 #include <qpa/qplatformthemefactory_p.h>
+#include <qpa/qwindowsysteminterface.h>
 
 Q_LOGGING_CATEGORY(lqt6ct, "qt6ct", QtWarningMsg)
 
 //QT_QPA_PLATFORMTHEME=qt6ct
 
-Qt6CTPlatformTheme::Qt6CTPlatformTheme()
+Qt6CTPlatformTheme::Qt6CTPlatformTheme() :
+    m_generalFont(*QGenericUnixTheme::font(QPlatformTheme::SystemFont)),
+    m_fixedFont(*QGenericUnixTheme::font(QPlatformTheme::FixedFont))
 {
     Qt6CT::initConfig();
     if(QGuiApplication::desktopSettingsAware())
@@ -64,7 +70,6 @@ Qt6CTPlatformTheme::Qt6CTPlatformTheme()
         readSettings();
         QMetaObject::invokeMethod(this, "applySettings", Qt::QueuedConnection);
         QMetaObject::invokeMethod(this, "createFSWatcher", Qt::QueuedConnection);
-        QGuiApplication::setFont(m_generalFont);
     }
     qCDebug(lqt6ct) << "using qt6ct plugin";
 #ifdef QT_WIDGETS_LIB
@@ -91,7 +96,7 @@ QPlatformDialogHelper *Qt6CTPlatformTheme::createPlatformDialogHelper(DialogType
 const QPalette *Qt6CTPlatformTheme::palette(QPlatformTheme::Palette type) const
 {
     qDebug() << Q_FUNC_INFO << type;
-    return (m_usePalette && m_palette) ? &*m_palette : QGenericUnixTheme::palette(type);
+    return m_palette ? &*m_palette : QGenericUnixTheme::palette(type);
 }
 
 const QFont *Qt6CTPlatformTheme::font(QPlatformTheme::Font type) const
@@ -150,44 +155,19 @@ void Qt6CTPlatformTheme::applySettings()
 {
     if(!QGuiApplication::desktopSettingsAware() || m_isIgnored)
     {
-        m_usePalette = false;
         m_update = true;
         return;
     }
 
-    if(!m_update)
-    {
-        //do not override application palette
-        if(QCoreApplication::testAttribute(Qt::AA_SetPalette))
-        {
-            m_usePalette = false;
-            qCDebug(lqt6ct) << "palette support is disabled";
-        }
-    }
-
-    QGuiApplication::setFont(m_generalFont); //apply font
-
-    if(m_update && m_usePalette)
-        QGuiApplication::setPalette(m_palette ? *m_palette : *QGenericUnixTheme::palette(QPlatformTheme::SystemPalette));
-
 #ifdef QT_WIDGETS_LIB
     if(hasWidgets())
     {
-        qApp->setFont(m_generalFont);
-
-        //Qt 5.6 or higher should be use themeHint function on application startup.
-        //So, there is no need to call this function first time.
         if(m_update)
         {
-            qApp->setWheelScrollLines(m_wheelScrollLines);
+            if(FontHash *hash = qt_app_fonts_hash(); hash && hash->size())
+                hash->clear();
             Qt6CT::reloadStyleInstanceSettings();
         }
-
-        if(!m_palette)
-            m_palette = qApp->style()->standardPalette();
-
-        if(m_update && m_usePalette)
-            qApp->setPalette(*m_palette);
 
         if(m_userStyleSheet != m_prevStyleSheet)
         {
@@ -210,18 +190,21 @@ void Qt6CTPlatformTheme::applySettings()
 #endif
 
     if(m_update)
-        QIconLoader::instance()->updateSystemTheme(); //apply icons
+    {
+        QWindowSystemInterface::handleThemeChange();
+        QCoreApplication::postEvent(qGuiApp, new QEvent(QEvent::ApplicationFontChange));
+    }
 
 #ifdef QT_WIDGETS_LIB
     if(hasWidgets() && m_update)
     {
-        for(QWidget *w : qApp->allWidgets())
-        {
-            QEvent e(QEvent::ThemeChange);
-            QApplication::sendEvent(w, &e);
-            if(m_palette && m_usePalette)
-                w->setPalette(*m_palette);
-        }
+#if QT_CONFIG(graphicsview)
+        for(auto scene : std::as_const(QApplicationPrivate::instance()->scene_list))
+            QCoreApplication::postEvent(scene, new QEvent(QEvent::ApplicationFontChange));
+#endif
+
+        for(QWidget *w : QApplication::allWidgets())
+            QCoreApplication::postEvent(w, new QEvent(QEvent::ThemeChange));
     }
 #endif
 
@@ -253,7 +236,7 @@ void Qt6CTPlatformTheme::readSettings()
 
     settings.beginGroup("Appearance");
     m_style = settings.value("style", "Fusion").toString();
-    QString schemePath = settings.value("custom_palette", false).toBool()
+    QString schemePath = !m_isIgnored && settings.value("custom_palette", false).toBool()
         ? Qt6CT::resolvePath(settings.value("color_scheme_path").toString()) //replace environment variables
         : QString();
     m_palette = Qt6CT::loadColorScheme(schemePath);
@@ -274,10 +257,10 @@ void Qt6CTPlatformTheme::readSettings()
     settings.endGroup();
 
     settings.beginGroup("Fonts");
-    m_generalFont = QGuiApplication::font();
-    m_generalFont.fromString(settings.value("general", QGuiApplication::font()).toString());
-    m_fixedFont = QGuiApplication::font();
-    m_fixedFont.fromString(settings.value("fixed", QGuiApplication::font()).toString());
+    m_generalFont = *QGenericUnixTheme::font(QPlatformTheme::SystemFont);
+    m_generalFont.fromString(settings.value("general").toString());
+    m_fixedFont = *QGenericUnixTheme::font(QPlatformTheme::FixedFont);
+    m_fixedFont.fromString(settings.value("fixed").toString());
     settings.endGroup();
 
     settings.beginGroup("Interface");
@@ -333,8 +316,6 @@ void Qt6CTPlatformTheme::readSettings()
             QCoreApplication::setAttribute(Qt::AA_ForceRasterWidgets, true);
         else if(!m_isIgnored && forceRasterWidgets == Qt::Unchecked)
             QCoreApplication::setAttribute(Qt::AA_ForceRasterWidgets, false);
-        if(m_isIgnored)
-            m_usePalette = false;
         settings.endGroup();
     }
 }

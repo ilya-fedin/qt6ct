@@ -11,7 +11,7 @@ SOURCES += \
     qt6ctplatformtheme.cpp
 
 !equals(DISABLE_WIDGETS,1) {
-   QT += widgets
+   QT += widgets widgets-private
 }
 
 OTHER_FILES += qt6ct.json
