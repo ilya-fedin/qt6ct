@@ -169,6 +169,9 @@ void Qt6CTPlatformTheme::applySettings()
 
     QGuiApplication::setFont(m_generalFont); //apply font
 
+    if(m_update && m_usePalette)
+        QGuiApplication::setPalette(m_palette ? *m_palette : *QGenericUnixTheme::palette(QPlatformTheme::SystemPalette));
+
 #ifdef QT_WIDGETS_LIB
     if(hasWidgets())
     {
