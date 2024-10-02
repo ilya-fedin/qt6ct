@@ -70,11 +70,18 @@ void FontsPage::onFontChangeRequested(QWidget *widget)
 {
     bool ok = false;
     QFont font = QFontDialog::getFont (&ok, widget->font(), this);
-    if(ok)
-    {
-        widget->setFont(font);
-        qobject_cast<QLabel*>(widget)->setText(font.family () + " " + QString::number(font.pointSize ()));
-    }
+    if(!ok)
+        return;
+
+    if(font.weight() == QFont::Normal
+        && (font.styleName() == QLatin1String("Regular")
+            || font.styleName() == QLatin1String("Normal")
+            || font.styleName() == QLatin1String("Book")
+            || font.styleName() == QLatin1String("Roman")))
+        font.setStyleName(QString());
+
+    widget->setFont(font);
+    qobject_cast<QLabel*>(widget)->setText(font.family () + " " + QString::number(font.pointSize ()));
 }
 
 void FontsPage::readSettings()
