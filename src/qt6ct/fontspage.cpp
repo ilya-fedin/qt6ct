@@ -29,6 +29,7 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QApplication>
+#include <QFontDatabase>
 #include <QFontDialog>
 #include <QDir>
 #include <QFile>
@@ -88,8 +89,9 @@ void FontsPage::readSettings()
 
 void FontsPage::loadFont(QSettings *settings, QLabel *label, const QString &key)
 {
-    QFont font = QApplication::font();
-    font.fromString(settings->value(key, QApplication::font().toString()).toString());
+    QFont font = settings->value(key, key == "fixed"
+        ? QFontDatabase::systemFont(QFontDatabase::FixedFont)
+        : QFontDatabase::systemFont(QFontDatabase::GeneralFont)).value<QFont>();
     label->setText(font.family() + " " + QString::number(font.pointSize()));
     label->setFont(font);
 }
