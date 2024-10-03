@@ -61,8 +61,8 @@ FontsPage::~FontsPage()
 void FontsPage::writeSettings(QSettings *settings)
 {
     settings->beginGroup("Fonts");
-    settings->setValue("general", m_ui->generalFontLabel->font().toString());
-    settings->setValue("fixed", m_ui->fixedFontLabel->font().toString());
+    settings->setValue("general", m_ui->generalFontLabel->property("value"));
+    settings->setValue("fixed", m_ui->fixedFontLabel->property("value"));
     settings->endGroup();
 }
 
@@ -80,6 +80,7 @@ void FontsPage::onFontChangeRequested(QWidget *widget)
             || font.styleName() == QLatin1String("Roman")))
         font.setStyleName(QString());
 
+    widget->setProperty("value", font.toString());
     widget->setFont(font);
     qobject_cast<QLabel*>(widget)->setText(font.family () + " " + QString::number(font.pointSize ()));
 }
@@ -99,6 +100,7 @@ void FontsPage::loadFont(QSettings *settings, QLabel *label, const QString &key)
     font.fromString(settings->value(key, QApplication::font().toString()).toString());
     label->setText(font.family() + " " + QString::number(font.pointSize()));
     label->setFont(font);
+    label->setProperty("value", font.toString());
 }
 
 void FontsPage::on_createFontsConfButton_clicked()
