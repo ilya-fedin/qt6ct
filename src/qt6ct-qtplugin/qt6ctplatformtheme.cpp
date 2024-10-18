@@ -91,7 +91,7 @@ QPlatformDialogHelper *Qt6CTPlatformTheme::createPlatformDialogHelper(DialogType
 const QPalette *Qt6CTPlatformTheme::palette(QPlatformTheme::Palette type) const
 {
     qDebug() << Q_FUNC_INFO << type;
-    return (m_usePalette && m_palette) ? m_palette.get() : QGenericUnixTheme::palette(type);
+    return (m_usePalette && m_palette) ? &*m_palette : QGenericUnixTheme::palette(type);
 }
 
 const QFont *Qt6CTPlatformTheme::font(QPlatformTheme::Font type) const
@@ -184,7 +184,7 @@ void Qt6CTPlatformTheme::applySettings()
         }
 
         if(!m_palette)
-            m_palette = std::make_unique<QPalette>(qApp->style()->standardPalette());
+            m_palette = qApp->style()->standardPalette();
 
         if(m_update && m_usePalette)
             qApp->setPalette(*m_palette);
@@ -256,9 +256,7 @@ void Qt6CTPlatformTheme::readSettings()
     QString schemePath = settings.value("custom_palette", false).toBool()
         ? Qt6CT::resolvePath(settings.value("color_scheme_path").toString()) //replace environment variables
         : QString();
-    m_palette = !schemePath.isEmpty()
-        ? std::make_unique<QPalette>(Qt6CT::loadColorScheme(schemePath, *QPlatformTheme::palette(SystemPalette)))
-        : nullptr;
+    m_palette = Qt6CT::loadColorScheme(schemePath);
     m_iconTheme = settings.value("icon_theme").toString();
     //load dialogs
     if(!m_update)

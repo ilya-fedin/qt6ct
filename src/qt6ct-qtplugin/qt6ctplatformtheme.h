@@ -78,7 +78,7 @@ private:
 #endif
     QString loadStyleSheets(const QStringList &paths);
     QString m_style, m_iconTheme, m_userStyleSheet, m_prevStyleSheet;
-    std::unique_ptr<QPalette> m_palette;
+    std::optional<QPalette> m_palette;
     QFont m_generalFont, m_fixedFont;
     int m_doubleClickInterval;
     int m_cursorFlashTime;

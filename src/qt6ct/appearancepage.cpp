@@ -127,7 +127,7 @@ void AppearancePage::on_styleComboBox_textActivated(const QString &text)
 
 void AppearancePage::on_colorSchemeComboBox_activated(int)
 {
-    m_customPalette = Qt6CT::loadColorScheme(m_ui->colorSchemeComboBox->currentData().toString(), palette());
+    m_customPalette = Qt6CT::loadColorScheme(m_ui->colorSchemeComboBox->currentData().toString()).value_or(palette());
     updatePalette();
 }
 
@@ -341,7 +341,7 @@ void AppearancePage::readSettings()
         int index = m_ui->colorSchemeComboBox->findData(colorSchemePath);
         if(index >= 0)
             m_ui->colorSchemeComboBox->setCurrentIndex(index);
-        m_customPalette = Qt6CT::loadColorScheme(m_ui->colorSchemeComboBox->currentData().toString(), palette());
+        m_customPalette = Qt6CT::loadColorScheme(m_ui->colorSchemeComboBox->currentData().toString()).value_or(palette());
     }
 
     on_styleComboBox_textActivated(m_ui->styleComboBox->currentText());

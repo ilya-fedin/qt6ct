@@ -146,16 +146,17 @@ QString Qt6CT::resolvePath(const QString &path)
     return tmp;
 }
 
-QPalette Qt6CT::loadColorScheme(const QString &filePath, const QPalette &fallback)
+std::optional<QPalette> Qt6CT::loadColorScheme(const QString &filePath)
 {
-    QPalette customPalette;
+    if(filePath.isEmpty())
+        return std::nullopt;
+
     QSettings settings(filePath, QSettings::IniFormat);
     settings.beginGroup("ColorScheme");
     QStringList activeColors = settings.value("active_colors").toStringList();
     QStringList inactiveColors = settings.value("inactive_colors").toStringList();
     QStringList disabledColors = settings.value("disabled_colors").toStringList();
     settings.endGroup();
-
 
 #if (QT_VERSION >= QT_VERSION_CHECK(6,6,0))
     if(activeColors.count() == QPalette::Accent)
@@ -166,24 +167,19 @@ QPalette Qt6CT::loadColorScheme(const QString &filePath, const QPalette &fallbac
         disabledColors << disabledColors.at(QPalette::Highlight);
 #endif
 
+    if(activeColors.count() < QPalette::NColorRoles ||
+            inactiveColors.count() < QPalette::NColorRoles ||
+            disabledColors.count() < QPalette::NColorRoles)
+        return std::nullopt;
 
-    if(activeColors.count() >= QPalette::NColorRoles &&
-            inactiveColors.count() >= QPalette::NColorRoles &&
-            disabledColors.count() >= QPalette::NColorRoles)
+    QPalette customPalette;
+    for (int i = 0; i < QPalette::NColorRoles; i++)
     {
-        for (int i = 0; i < QPalette::NColorRoles; i++)
-        {
-            QPalette::ColorRole role = QPalette::ColorRole(i);
-            customPalette.setColor(QPalette::Active, role, QColor(activeColors.at(i)));
-            customPalette.setColor(QPalette::Inactive, role, QColor(inactiveColors.at(i)));
-            customPalette.setColor(QPalette::Disabled, role, QColor(disabledColors.at(i)));
-        }
+        QPalette::ColorRole role = QPalette::ColorRole(i);
+        customPalette.setColor(QPalette::Active, role, QColor(activeColors.at(i)));
+        customPalette.setColor(QPalette::Inactive, role, QColor(inactiveColors.at(i)));
+        customPalette.setColor(QPalette::Disabled, role, QColor(disabledColors.at(i)));
     }
-    else
-    {
-        customPalette = fallback; //load fallback palette
-    }
-
     return customPalette;
 }
 
