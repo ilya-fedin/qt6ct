@@ -67,7 +67,7 @@ public:
     static QString userColorSchemePath();
     static QStringList sharedColorSchemePaths();
     static QString resolvePath(const QString &path);
-    static QPalette loadColorScheme(const QString &filePath, const QPalette &fallback);
+    static std::optional<QPalette> loadColorScheme(const QString &filePath);
 
     static void registerStyleInstance(StyleInstance *instance);
     static void unregisterStyleInstance(StyleInstance *instance);
