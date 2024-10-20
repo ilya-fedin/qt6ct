@@ -24,7 +24,7 @@ set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
 
 add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0x060000)
 
-find_package(Qt6 REQUIRED COMPONENTS BuildInternals Core Gui OPTIONAL_COMPONENTS Widgets LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS BuildInternals Core Gui OPTIONAL_COMPONENTS Widgets QuickControls2 LinguistTools)
 
 get_target_property(QT_QTPATHS_EXECUTABLE Qt6::qtpaths IMPORTED_LOCATION)
 
