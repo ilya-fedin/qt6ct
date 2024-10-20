@@ -59,6 +59,11 @@
 #include <qpa/qplatformthemefactory_p.h>
 #include <qpa/qwindowsysteminterface.h>
 
+#ifdef KF_ICONTHEMES_LIB
+#include <KIconEngine>
+#include <KIconLoader>
+#endif
+
 Q_LOGGING_CATEGORY(lqt6ct, "qt6ct", QtWarningMsg)
 
 //QT_QPA_PLATFORMTHEME=qt6ct
@@ -163,6 +168,13 @@ QIcon Qt6CTPlatformTheme::fileIcon(const QFileInfo &fileInfo, QPlatformTheme::Ic
     QMimeType type = db.mimeTypeForFile(fileInfo);
     return QIcon::fromTheme(type.iconName());
 }
+
+#ifdef KF_ICONTHEMES_LIB
+QIconEngine *Qt6CTPlatformTheme::createIconEngine(const QString &iconName) const
+{
+    return new KIconEngine(iconName, KIconLoader::global());
+}
+#endif
 
 void Qt6CTPlatformTheme::applySettings()
 {
