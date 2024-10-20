@@ -1,7 +1,5 @@
 project(qt6ct-style)
 
-add_definitions(-DUSE_WIDGETS)
-
 set(app_SRCS
   plugin.cpp
   qt6ctproxystyle.cpp
