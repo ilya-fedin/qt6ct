@@ -31,6 +31,7 @@ if(Qt6LinguistTools_FOUND)
 endif()
 
 add_executable(qt6ct ${app_SRCS})
-target_link_libraries(qt6ct PRIVATE Qt6::Widgets Qt6::WidgetsPrivate qt6ct-common)
+target_link_libraries(qt6ct PRIVATE Qt6::Widgets Qt6::GuiPrivate qt6ct-common)
+target_compile_definitions(qt6ct PRIVATE USE_WIDGETS)
 install(TARGETS qt6ct DESTINATION ${CMAKE_INSTALL_BINDIR})
 install(FILES qt6ct.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)

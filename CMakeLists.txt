@@ -22,9 +22,9 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_BUILD_RPATH_USE_ORIGIN ON)
 
-add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0x060000 -DUSE_WIDGETS)
+add_definitions(-DQT_DISABLE_DEPRECATED_BEFORE=0x060000)
 
-find_package(Qt6 REQUIRED COMPONENTS BuildInternals Core Widgets OPTIONAL_COMPONENTS LinguistTools)
+find_package(Qt6 REQUIRED COMPONENTS BuildInternals Core Gui OPTIONAL_COMPONENTS Widgets LinguistTools)
 
 get_target_property(QT_QTPATHS_EXECUTABLE Qt6::qtpaths IMPORTED_LOCATION)
 
@@ -69,10 +69,12 @@ endif()
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/qt6ct-common)
 
 add_link_options(-Wl,--no-undefined)
-add_subdirectory(src/qt6ct)
 add_subdirectory(src/qt6ct-common)
 add_subdirectory(src/qt6ct-qtplugin)
-add_subdirectory(src/qt6ct-style)
+if(Qt6Widgets_FOUND)
+    add_subdirectory(src/qt6ct-style)
+    add_subdirectory(src/qt6ct)
+endif()
 
 install(DIRECTORY qss DESTINATION ${CMAKE_INSTALL_DATADIR}/qt6ct)
 install(DIRECTORY colors DESTINATION ${CMAKE_INSTALL_DATADIR}/qt6ct)
