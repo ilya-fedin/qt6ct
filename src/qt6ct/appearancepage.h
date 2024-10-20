@@ -49,6 +49,10 @@ public:
 
     void writeSettings(QSettings *settings) override;
 
+#ifdef KF_CONFIGCORE_LIB
+    void writeSettings(KSharedConfigPtr config) override;
+#endif
+
 private slots:
     void on_styleComboBox_textActivated(const QString &text);
     void on_colorSchemeComboBox_activated(int);
