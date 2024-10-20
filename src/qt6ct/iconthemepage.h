@@ -51,6 +51,10 @@ public:
 
     void writeSettings(QSettings *settings) override;
 
+#ifdef KF_CONFIGCORE_LIB
+    void writeSettings(KSharedConfigPtr config) override;
+#endif
+
 private slots:
     void onFinished();
 

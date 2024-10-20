@@ -32,6 +32,10 @@
 #include <QWidget>
 #include <QSettings>
 
+#ifdef KF_CONFIGCORE_LIB
+#include <KSharedConfig>
+#endif
+
 class TabPage : public QWidget
 {
     Q_OBJECT
@@ -39,6 +43,10 @@ public:
     explicit TabPage(QWidget *parent = nullptr);
 
     virtual void writeSettings(QSettings *settings) = 0;
+
+#ifdef KF_CONFIGCORE_LIB
+    virtual void writeSettings(KSharedConfigPtr config) {}
+#endif
 };
 
 #endif // TABPAGE_H

@@ -35,6 +35,9 @@
 #include <QMenu>
 #include <QIcon>
 #include <QStringList>
+#ifdef KF_CONFIGCORE_LIB
+#include <KConfigGroup>
+#endif
 #include <qpa/qplatformthemefactory_p.h>
 #include "qt6ct.h"
 #include "appearancepage.h"
@@ -111,6 +114,15 @@ void AppearancePage::writeSettings(QSettings *settings)
     settings->setValue("standard_dialogs", m_ui->dialogComboBox->currentData().toString());
     settings->endGroup();
 }
+
+#ifdef KF_CONFIGCORE_LIB
+void AppearancePage::writeSettings(KSharedConfigPtr config)
+{
+    KConfigGroup group(config, "KDE");
+    group.writeEntry("widgetStyle", "qt6ct-style");
+    group.sync();
+}
+#endif
 
 void AppearancePage::on_styleComboBox_textActivated(const QString &text)
 {
