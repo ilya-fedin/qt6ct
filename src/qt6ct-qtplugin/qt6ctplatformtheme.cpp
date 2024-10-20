@@ -73,6 +73,9 @@ Qt6CTPlatformTheme::Qt6CTPlatformTheme() :
         readSettings();
         QMetaObject::invokeMethod(this, "applySettings", Qt::QueuedConnection);
         QMetaObject::invokeMethod(this, "createFSWatcher", Qt::QueuedConnection);
+        //must be applied before Q_COREAPP_STARTUP_FUNCTION execution
+        if(Qt6CT::isKColorScheme(m_schemePath))
+            qApp->setProperty("KDE_COLOR_SCHEME_PATH", m_schemePath);
 #if defined QT_WIDGETS_LIB && defined QT_QUICKCONTROLS2_LIB
         if(hasWidgets())
             //don't override the value explicitly set by the user
@@ -85,6 +88,7 @@ Qt6CTPlatformTheme::Qt6CTPlatformTheme() :
     if(!QStyleFactory::keys().contains("qt6ct-style"))
         qCCritical(lqt6ct) << "unable to find qt6ct proxy style";
 #endif
+    QCoreApplication::instance()->installEventFilter(this);
 }
 
 Qt6CTPlatformTheme::~Qt6CTPlatformTheme()
@@ -168,6 +172,11 @@ void Qt6CTPlatformTheme::applySettings()
         return;
     }
 
+    if(Qt6CT::isKColorScheme(m_schemePath))
+        qApp->setProperty("KDE_COLOR_SCHEME_PATH", m_schemePath);
+    else if(m_update)
+        qApp->setProperty("KDE_COLOR_SCHEME_PATH", QVariant());
+
 #ifdef QT_WIDGETS_LIB
     if(hasWidgets())
     {
@@ -245,10 +254,10 @@ void Qt6CTPlatformTheme::readSettings()
 
     settings.beginGroup("Appearance");
     m_style = settings.value("style", "Fusion").toString();
-    QString schemePath = !m_isIgnored && settings.value("custom_palette", false).toBool()
+    m_schemePath = !m_isIgnored && settings.value("custom_palette", false).toBool()
         ? Qt6CT::resolvePath(settings.value("color_scheme_path").toString()) //replace environment variables
         : QString();
-    m_palette = Qt6CT::loadColorScheme(schemePath);
+    m_palette = Qt6CT::loadColorScheme(m_schemePath);
     m_iconTheme = settings.value("icon_theme").toString();
     //load dialogs
     if(!m_update)
@@ -353,4 +362,18 @@ QString Qt6CTPlatformTheme::loadStyleSheets(const QStringList &paths)
     static const QRegularExpression regExp("//.*\n");
     content.replace(regExp, "\n");
     return content;
+}
+
+//There's such a thing as KColorSchemeManager that lets the user to change the color scheme
+//application-wide and we should re-apply the color scheme if KCSM resets it to the default
+//which leads KColorScheme to get the color scheme from kdeglobals which won't help us.
+bool Qt6CTPlatformTheme::eventFilter(QObject *obj, QEvent *e)
+{
+    if(obj == qApp &&
+            e->type() == QEvent::DynamicPropertyChange &&
+            static_cast<QDynamicPropertyChangeEvent*>(e)->propertyName() == "KDE_COLOR_SCHEME_PATH" &&
+            qApp->property("KDE_COLOR_SCHEME_PATH").toString().isEmpty() &&
+            Qt6CT::isKColorScheme(m_schemePath))
+        applySettings();
+    return QObject::eventFilter(obj, e);
 }
