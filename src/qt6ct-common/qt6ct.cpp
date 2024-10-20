@@ -34,6 +34,10 @@
 #include <QFile>
 #include <QSettings>
 #include <QtDebug>
+#if defined KF_CONFIGCORE_LIB && defined KF_COLORSCHEME_LIB
+#include <KSharedConfig>
+#include <KColorScheme>
+#endif
 #include "qt6ct.h"
 
 #ifndef QT6CT_DATADIR
@@ -116,6 +120,9 @@ QStringList Qt6CT::sharedColorSchemePaths()
     for(const QString &p : QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation))
     {
         paths << (p + QLatin1String("/qt6ct/colors"));
+#if defined KF_CONFIGCORE_LIB && defined KF_COLORSCHEME_LIB
+        paths << (p + QLatin1String("/color-schemes"));
+#endif
     }
     paths << QLatin1String(QT6CT_DATADIR"/qt6ct/colors");
     paths.removeDuplicates();
@@ -146,10 +153,20 @@ QString Qt6CT::resolvePath(const QString &path)
     return tmp;
 }
 
+bool Qt6CT::isKColorScheme(const QString &filePath)
+{
+    return filePath.toLower().endsWith(".colors");
+}
+
 std::optional<QPalette> Qt6CT::loadColorScheme(const QString &filePath)
 {
     if(filePath.isEmpty())
         return std::nullopt;
+
+#if defined KF_CONFIGCORE_LIB && defined KF_COLORSCHEME_LIB
+    if(isKColorScheme(filePath))
+        return KColorScheme::createApplicationPalette(KSharedConfig::openConfig(filePath));
+#endif
 
     QSettings settings(filePath, QSettings::IniFormat);
     settings.beginGroup("ColorScheme");
