@@ -68,10 +68,8 @@ public:
 
 private slots:
     void applySettings();
-#ifdef QT_WIDGETS_LIB
     void createFSWatcher();
     void updateSettings();
-#endif
 
 private:
     void readSettings();

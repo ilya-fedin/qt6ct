@@ -63,9 +63,7 @@ Qt6CTPlatformTheme::Qt6CTPlatformTheme()
     {
         readSettings();
         QMetaObject::invokeMethod(this, "applySettings", Qt::QueuedConnection);
-#ifdef QT_WIDGETS_LIB
         QMetaObject::invokeMethod(this, "createFSWatcher", Qt::QueuedConnection);
-#endif
         QGuiApplication::setFont(m_generalFont);
     }
     qCDebug(lqt6ct) << "using qt6ct plugin";
@@ -230,7 +228,6 @@ void Qt6CTPlatformTheme::applySettings()
     m_update = true;
 }
 
-#ifdef QT_WIDGETS_LIB
 void Qt6CTPlatformTheme::createFSWatcher()
 {
     QFileSystemWatcher *watcher = new QFileSystemWatcher(this);
@@ -249,7 +246,6 @@ void Qt6CTPlatformTheme::updateSettings()
     readSettings();
     applySettings();
 }
-#endif
 
 void Qt6CTPlatformTheme::readSettings()
 {
