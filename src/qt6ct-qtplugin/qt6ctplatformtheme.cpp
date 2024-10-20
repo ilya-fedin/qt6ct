@@ -44,6 +44,9 @@
 #endif
 #include <QFile>
 #include <QFileSystemWatcher>
+#ifdef QT_QUICKCONTROLS2_LIB
+#include <QQuickStyle>
+#endif
 #include <private/qiconloader_p.h>
 
 #include "qt6ct.h"
@@ -67,6 +70,12 @@ Qt6CTPlatformTheme::Qt6CTPlatformTheme()
         QMetaObject::invokeMethod(this, "createFSWatcher", Qt::QueuedConnection);
 #endif
         QGuiApplication::setFont(m_generalFont);
+#if defined QT_WIDGETS_LIB && defined QT_QUICKCONTROLS2_LIB
+        if(hasWidgets())
+            //don't override the value explicitly set by the user
+            if(QQuickStyle::name().isEmpty() || QQuickStyle::name() == QLatin1String("Fusion"))
+                QQuickStyle::setStyle(QLatin1String("org.kde.desktop"));
+#endif
     }
     qCDebug(lqt6ct) << "using qt6ct plugin";
 #ifdef QT_WIDGETS_LIB
