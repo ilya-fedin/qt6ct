@@ -9,8 +9,13 @@ Requirements:
 
 - GNU Linux or FreeBSD
 - qtbase >= 6.0.0
+- qtdeclarative >= 6.0.0
 - qtsvg >= 6.0.0 (Runtime dependency for the SVG icon support)
 - qttools >= 6.0.0 (For build only)
+- kconfig >= 6.0.0
+- kcolorscheme >= 6.0.0
+- kiconthemes >= 6.0.0
+- qqc2-desktop-style >= 6.0.0 (Runtime dependency for QML theming support)
 
 
 Installation:
