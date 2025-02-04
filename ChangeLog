@@ -71,3 +71,14 @@ Version 0.9
 * updated Polish translation (Marek Adamski)
 * updated Russian translation
 * updated French translation (Wallon)
+
+Version 0.10
+* Remove .desktop suffix when calling setDesktopFileName
+* Allow to override Qt plugin directory with cmake
+* Support cmake build without QtWidgets
+* Support runtime settings update without QtWidgets
+* Don't save style name for regular font
+* Don't rely on label font for saving font settings
+* Fix initial fonts
+* Use QWindowSystemInterface::handleThemeChange
+* Add KDE theming support
