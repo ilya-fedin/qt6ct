@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2020-2024, Ilya Kotov <forkotov02@ya.ru>
+ * Copyright (c) 2025, Ilya Fedin <fedin-ilja2010@ya.ru>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are

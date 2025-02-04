@@ -44,3 +44,4 @@ Patches and improvements:
   Wayland fixes - Chris Rendle-Short
   Compatibility with custom stylesheets - John Lindgren
   CMake support impovements - Jonas Kvinge
+  KDE theming suppourt - Ilya Fedin
